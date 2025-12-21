@@ -35,5 +35,9 @@ class Auth {
         }
         return null;
     }
+
+    public static function hasRole($role_id) {
+        return isset($_SESSION['role_id']) && $_SESSION['role_id'] == $role_id;
+    }
 }
 ?>
