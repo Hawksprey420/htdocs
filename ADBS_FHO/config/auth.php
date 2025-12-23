@@ -17,6 +17,7 @@ class Auth {
         $_SESSION['user_id'] = $user->id;
         $_SESSION['username'] = $user->username;
         $_SESSION['role_id'] = $user->role_id;
+        $_SESSION['employee_id'] = $user->employee_id;
     }
 
     public static function logout() {
@@ -30,7 +31,8 @@ class Auth {
             return [
                 'id' => $_SESSION['user_id'],
                 'username' => $_SESSION['username'],
-                'role_id' => $_SESSION['role_id']
+                'role_id' => $_SESSION['role_id'],
+                'employee_id' => $_SESSION['employee_id'] ?? null
             ];
         }
         return null;
