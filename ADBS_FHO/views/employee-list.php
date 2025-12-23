@@ -84,6 +84,13 @@ include '../includes/topbar.php';
             </div>
         <?php endif; ?>
 
+        <?php if (isset($_GET['error'])): ?>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <strong>Error!</strong> <?php echo htmlspecialchars($_GET['error']); ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        <?php endif; ?>
+
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h2>Employee List</h2>
             <a href="add-employee.php" class="btn btn-success"><i class="fas fa-plus"></i> Add New Employee</a>

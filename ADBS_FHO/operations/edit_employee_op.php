@@ -3,9 +3,24 @@ require_once '../config/auth.php';
 require_once '../classes/conn.php';
 
 Auth::requireLogin();
+$user = Auth::user();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $emp_id = $_POST['emp_id'];
+
+    // RBAC Check
+    // Admin (1) and HR (2) can edit anyone.
+    // Employee (3) can only edit themselves.
+    if (Auth::hasRole(3)) {
+        if ($user['employee_id'] != $emp_id) {
+            header("Location: ../views/employee-data-edit.php?id=$emp_id&error=" . urlencode("Access Denied: You can only edit your own record."));
+            exit();
+        }
+    } elseif (!Auth::hasRole(1) && !Auth::hasRole(2)) {
+        // If not 1, 2, or 3 (or if role is missing)
+        header("Location: ../views/employee-list.php?error=" . urlencode("Access Denied: You do not have permission to edit records."));
+        exit();
+    }
     
     // Personal Info
     $first_name = $_POST['first_name'];
@@ -50,6 +65,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $end_date = $_POST['appointment_end_date'];
     $institution_id = $_POST['institution_id'];
     $gov_service = $_POST['gov_service'];
+
+    // Validation
+    $required_fields = [
+        'First Name' => $first_name,
+        'Last Name' => $last_name,
+        'Birthdate' => $birthdate,
+        'Sex' => $sex,
+        'Civil Status' => $civil_status,
+        'Mobile No' => $mobile_no,
+        'Email' => $email,
+        'Department' => $dept_id,
+        'Job Position' => $job_pos_id,
+        'Contract Type' => $contract_type_id,
+        'Start Date' => $start_date
+    ];
+
+    foreach ($required_fields as $field => $value) {
+        if (empty($value)) {
+            $_SESSION['error'] = "$field is required.";
+            $_SESSION['form_data'] = $_POST;
+            header("Location: ../views/employee-data-edit.php?id=$emp_id");
+            exit();
+        }
+    }
+
 
     $original_job_pos_id = $_POST['original_job_position_id'];
     $original_dept_id = $_POST['original_department_id'];
@@ -210,12 +250,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $conn->commit();
+        
+        // Clear form data on success
+        unset($_SESSION['form_data']);
+        unset($_SESSION['error']);
+
         header("Location: ../views/employee-list.php?msg=updated");
         exit();
 
     } catch (Exception $e) {
         $conn->rollback();
-        die("Transaction failed: " . $e->getMessage());
+        $_SESSION['error'] = "Transaction failed: " . $e->getMessage();
+        $_SESSION['form_data'] = $_POST;
+        header("Location: ../views/employee-data-edit.php?id=$emp_id");
+        exit();
     }
 }
 ?>

@@ -6,6 +6,12 @@ require_once '../classes/Logger.php';
 Auth::requireLogin();
 $user = Auth::user();
 
+// RBAC Check: Only Admin (Role ID 1) or HR Staff (Role ID 2) can add employees
+if (!Auth::hasRole(1) && !Auth::hasRole(2)) {
+    header("Location: ../views/employee-list.php?error=" . urlencode("Access Denied: You do not have permission to add records."));
+    exit();
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // 1. Collect Input Data
     $first_name = $_POST['first_name'];
@@ -48,6 +54,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $pay_grade = $_POST['pay_grade'];
     $contract_type = $_POST['contract_type_id'];
     $start_date = $_POST['appointment_start_date'];
+
+    // Validation
+    $required_fields = [
+        'First Name' => $first_name,
+        'Last Name' => $last_name,
+        'Birthdate' => $birthdate,
+        'Sex' => $sex,
+        'Civil Status' => $civil_status,
+        'Mobile No' => $mobile_no,
+        'Email' => $email,
+        'Department' => $dept_id,
+        'Job Position' => $pos_id,
+        'Contract Type' => $contract_type,
+        'Start Date' => $start_date
+    ];
+
+    foreach ($required_fields as $field => $value) {
+        if (empty($value)) {
+            $_SESSION['error'] = "$field is required.";
+            $_SESSION['form_data'] = $_POST;
+            header("Location: ../views/add-employee.php");
+            exit();
+        }
+    }
+
     $end_date = $_POST['appointment_end_date'];
     $institution_id = $_POST['institution_id'];
     $gov_service = $_POST['gov_service'];
@@ -155,12 +186,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $conn->commit();
         Logger::log($user['id'], 'Add Employee', "Added employee ID: $emp_id ($first_name $last_name)");
         
+        // Clear form data on success
+        unset($_SESSION['form_data']);
+        unset($_SESSION['error']);
+
         header("Location: ../views/employee-list.php?msg=added");
         exit();
 
     } catch (Exception $e) {
         $conn->rollback();
-        echo "Error: " . $e->getMessage();
+        $_SESSION['error'] = "System Error: " . $e->getMessage();
+        $_SESSION['form_data'] = $_POST;
+        header("Location: ../views/add-employee.php");
+        exit();
     }
 }
 ?>

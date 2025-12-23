@@ -6,6 +6,12 @@ require_once '../classes/Logger.php';
 Auth::requireLogin();
 $user = Auth::user();
 
+// RBAC Check: Only Admin (Role ID 1) or HR Staff (Role ID 2) can delete employees
+if (!Auth::hasRole(1) && !Auth::hasRole(2)) {
+    header("Location: ../views/employee-list.php?error=" . urlencode("Access Denied: You do not have permission to delete records."));
+    exit();
+}
+
 if (isset($_GET['id'])) {
     $id = (int)$_GET['id'];
 
