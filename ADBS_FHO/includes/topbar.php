@@ -19,7 +19,10 @@
                 <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
                     <?php echo strtoupper(substr($_SESSION['username'] ?? 'U', 0, 1)); ?>
                 </div>
-                <strong><?php echo htmlspecialchars($_SESSION['username'] ?? 'User'); ?></strong>
+                <div class="d-flex flex-column">
+                    <strong><?php echo htmlspecialchars($_SESSION['fullname'] ?? $_SESSION['username'] ?? 'User'); ?></strong>
+                    <small class="text-muted" style="font-size: 0.8em;"><?php echo htmlspecialchars($_SESSION['username'] ?? ''); ?></small>
+                </div>
             </a>
             <ul class="dropdown-menu dropdown-menu-end text-small shadow" aria-labelledby="dropdownUser1">
                 <li><a class="dropdown-item" href="<?php echo isset($is_root) && $is_root ? '' : '../'; ?>logout.php">Sign out</a></li>

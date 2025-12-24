@@ -8,7 +8,8 @@ class Auth {
 
     public static function requireLogin() {
         if (!self::isLoggedIn()) {
-            header("Location: login.php");
+            // Use absolute path to avoid 404 when called from subdirectories
+            header("Location: /ADBS_FHO/login.php");
             exit();
         }
     }
@@ -18,11 +19,12 @@ class Auth {
         $_SESSION['username'] = $user->username;
         $_SESSION['role_id'] = $user->role_id;
         $_SESSION['employee_id'] = $user->employee_id;
+        $_SESSION['fullname'] = $user->fullname;
     }
 
     public static function logout() {
         session_destroy();
-        header("Location: login.php");
+        header("Location: /ADBS_FHO/login.php");
         exit();
     }
     
@@ -32,7 +34,8 @@ class Auth {
                 'id' => $_SESSION['user_id'],
                 'username' => $_SESSION['username'],
                 'role_id' => $_SESSION['role_id'],
-                'employee_id' => $_SESSION['employee_id'] ?? null
+                'employee_id' => $_SESSION['employee_id'] ?? null,
+                'fullname' => $_SESSION['fullname'] ?? $_SESSION['username']
             ];
         }
         return null;

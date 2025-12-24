@@ -10,6 +10,7 @@ class User {
     public $role_id;
     public $is_active;
     public $created_at;
+    public $fullname;
 
     public function __construct($db) {
         $this->conn = $db;
@@ -43,9 +44,10 @@ class User {
 
     // Login
     public function login($username, $password) {
-        $query = "SELECT id, employee_id, username, password, role_id, is_active 
-                  FROM " . $this->table_name . " 
-                  WHERE username = ? LIMIT 0,1";
+        $query = "SELECT u.id, u.employee_id, u.username, u.password, u.role_id, u.is_active, e.first_name, e.last_name 
+                  FROM " . $this->table_name . " u
+                  LEFT JOIN employees e ON u.employee_id = e.idemployees
+                  WHERE u.username = ? LIMIT 0,1";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bind_param("s", $username);
@@ -60,6 +62,13 @@ class User {
                 $this->username = $row['username'];
                 $this->role_id = $row['role_id'];
                 $this->is_active = $row['is_active'];
+                
+                if (!empty($row['first_name']) && !empty($row['last_name'])) {
+                    $this->fullname = $row['first_name'] . ' ' . $row['last_name'];
+                } else {
+                    $this->fullname = $row['username'];
+                }
+                
                 return true;
             }
         }

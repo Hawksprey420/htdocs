@@ -40,6 +40,30 @@ $stmt->execute();
 $srv = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
+// Fetch Government IDs
+$sql_gov = "SELECT * FROM government_ids WHERE employee_id = ?";
+$stmt = $conn->prepare($sql_gov);
+$stmt->bind_param("i", $emp_id);
+$stmt->execute();
+$gov_ids_result = $stmt->get_result();
+$gov_ids = [];
+while ($row = $gov_ids_result->fetch_assoc()) {
+    $gov_ids[] = $row;
+}
+$stmt->close();
+
+// Fetch Character References
+$sql_ref = "SELECT * FROM character_references WHERE employee_id = ?";
+$stmt = $conn->prepare($sql_ref);
+$stmt->bind_param("i", $emp_id);
+$stmt->execute();
+$refs_result = $stmt->get_result();
+$refs = [];
+while ($row = $refs_result->fetch_assoc()) {
+    $refs[] = $row;
+}
+$stmt->close();
+
 // Fetch Dropdowns (same as add)
 $dept_result = $conn->query("SELECT iddepartments, dept_name FROM departments ORDER BY dept_name");
 $pos_result = $conn->query("SELECT idjob_positions, job_category FROM job_positions ORDER BY job_category");
@@ -190,6 +214,11 @@ function old($key, $default = null) {
             <div class="row mb-3">
                 <div class="col-md-12">
                     <label class="form-label">Residential Address</label>
+                    <div class="input-group mb-2">
+                        <input type="text" name="res_spec_address" class="form-control" value="<?php echo old('res_spec_address', $emp['res_spec_address']); ?>" placeholder="House/Block/Lot No.">
+                        <input type="text" name="res_street_address" class="form-control" value="<?php echo old('res_street_address', $emp['res_street_address']); ?>" placeholder="Street">
+                        <input type="text" name="res_vill_address" class="form-control" value="<?php echo old('res_vill_address', $emp['res_vill_address']); ?>" placeholder="Subdivision/Village">
+                    </div>
                     <div class="input-group">
                         <input type="text" name="res_barangay_address" class="form-control" value="<?php echo old('res_barangay_address', $emp['res_barangay_address']); ?>" placeholder="Barangay" required>
                         <input type="text" name="res_city" class="form-control" value="<?php echo old('res_city', $emp['res_city']); ?>" placeholder="City" required>
@@ -201,6 +230,11 @@ function old($key, $default = null) {
             <div class="row mb-3">
                 <div class="col-md-12">
                     <label class="form-label">Permanent Address</label>
+                    <div class="input-group mb-2">
+                        <input type="text" name="perm_spec_address" class="form-control" value="<?php echo old('perm_spec_address', $emp['perm_spec_address']); ?>" placeholder="House/Block/Lot No.">
+                        <input type="text" name="perm_street_address" class="form-control" value="<?php echo old('perm_street_address', $emp['perm_street_address']); ?>" placeholder="Street">
+                        <input type="text" name="perm_vill_address" class="form-control" value="<?php echo old('perm_vill_address', $emp['perm_vill_address']); ?>" placeholder="Subdivision/Village">
+                    </div>
                     <div class="input-group">
                         <input type="text" name="perm_barangay_address" class="form-control" value="<?php echo old('perm_barangay_address', $emp['perm_barangay_address']); ?>" placeholder="Barangay" required>
                         <input type="text" name="perm_city" class="form-control" value="<?php echo old('perm_city', $emp['perm_city']); ?>" placeholder="City" required>
@@ -304,10 +338,288 @@ function old($key, $default = null) {
                 </div>
             </div>
 
+            <!-- C4 Questions -->
+            <h4 class="mt-4 mb-3">C4 - Questions (Q34-Q40)</h4>
+            
+            <!-- Q34 -->
+            <div class="card mb-3">
+                <div class="card-body">
+                    <p class="fw-bold">34. Related to appointing authority?</p>
+                    <div class="mb-2">
+                        <label>a. 3rd degree?</label>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="Q34A" value="1" <?php echo ($emp['Q34A'] == 1) ? 'checked' : ''; ?>> Yes
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="Q34A" value="0" <?php echo ($emp['Q34A'] == 0) ? 'checked' : ''; ?>> No
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label>b. 4th degree?</label>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="Q34B" value="1" <?php echo ($emp['Q34B'] == 1) ? 'checked' : ''; ?>> Yes
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="Q34B" value="0" <?php echo ($emp['Q34B'] == 0) ? 'checked' : ''; ?>> No
+                        </div>
+                    </div>
+                    <input type="text" name="Q34_details" class="form-control" placeholder="Details" value="<?php echo htmlspecialchars($emp['Q34_details']); ?>">
+                </div>
+            </div>
+
+            <!-- Q35 -->
+            <div class="card mb-3">
+                <div class="card-body">
+                    <p class="fw-bold">35. Found guilty of offense?</p>
+                    <div class="mb-2">
+                        <label>a. Admin Offense?</label>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="Q35a" value="1" <?php echo ($emp['Q35a'] == 1) ? 'checked' : ''; ?>> Yes
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="Q35a" value="0" <?php echo ($emp['Q35a'] == 0) ? 'checked' : ''; ?>> No
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label>b. Criminal Charge?</label>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="Q35b" value="1" <?php echo ($emp['Q35b'] == 1) ? 'checked' : ''; ?>> Yes
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="Q35b" value="0" <?php echo ($emp['Q35b'] == 0) ? 'checked' : ''; ?>> No
+                        </div>
+                    </div>
+                    <input type="text" name="Q35_details" class="form-control" placeholder="Details" value="<?php echo htmlspecialchars($emp['Q35_details']); ?>">
+                </div>
+            </div>
+
+            <!-- Q36 -->
+            <div class="card mb-3">
+                <div class="card-body">
+                    <p class="fw-bold">36. Convicted of crime?</p>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="Q36" value="Yes" <?php echo ($emp['Q36'] == 'Yes') ? 'checked' : ''; ?>> Yes
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="Q36" value="No" <?php echo ($emp['Q36'] == 'No') ? 'checked' : ''; ?>> No
+                    </div>
+                    <input type="text" name="Q36_details" class="form-control mt-2" placeholder="Details" value="<?php echo htmlspecialchars($emp['Q36_details']); ?>">
+                </div>
+            </div>
+
+            <!-- Q37 -->
+            <div class="card mb-3">
+                <div class="card-body">
+                    <p class="fw-bold">37. Separated from service?</p>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="Q37" value="1" <?php echo ($emp['Q37'] == 1) ? 'checked' : ''; ?>> Yes
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="Q37" value="0" <?php echo ($emp['Q37'] == 0) ? 'checked' : ''; ?>> No
+                    </div>
+                    <input type="text" name="Q37_details" class="form-control mt-2" placeholder="Details" value="<?php echo htmlspecialchars($emp['Q37_details']); ?>">
+                </div>
+            </div>
+
+            <!-- Q38 -->
+            <div class="card mb-3">
+                <div class="card-body">
+                    <p class="fw-bold">38. Election Candidate?</p>
+                    <div class="mb-2">
+                        <label>a. Candidate?</label>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="Q38a" value="1" <?php echo ($emp['Q38a'] == 1) ? 'checked' : ''; ?>> Yes
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="Q38a" value="0" <?php echo ($emp['Q38a'] == 0) ? 'checked' : ''; ?>> No
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label>b. Resigned for campaign?</label>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="Q38b" value="1" <?php echo ($emp['Q38b'] == 1) ? 'checked' : ''; ?>> Yes
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="Q38b" value="0" <?php echo ($emp['Q38b'] == 0) ? 'checked' : ''; ?>> No
+                        </div>
+                    </div>
+                    <input type="text" name="Q38_details" class="form-control" placeholder="Details" value="<?php echo htmlspecialchars($emp['Q38_details']); ?>">
+                </div>
+            </div>
+
+            <!-- Q39 -->
+            <div class="card mb-3">
+                <div class="card-body">
+                    <p class="fw-bold">39. Immigrant Status?</p>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="Q39a" value="1" <?php echo ($emp['Q39a'] == 1) ? 'checked' : ''; ?>> Yes
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="Q39a" value="0" <?php echo ($emp['Q39a'] == 0) ? 'checked' : ''; ?>> No
+                    </div>
+                    <input type="text" name="Q39_details" class="form-control mt-2" placeholder="Details" value="<?php echo htmlspecialchars($emp['Q39_details']); ?>">
+                </div>
+            </div>
+
+            <!-- Q40 -->
+            <div class="card mb-3">
+                <div class="card-body">
+                    <p class="fw-bold">40. Special Group Membership?</p>
+                    <div class="mb-2">
+                        <label>a. Indigenous?</label>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="Q40a" value="1" <?php echo ($emp['Q40a'] == 1) ? 'checked' : ''; ?>> Yes
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="Q40a" value="0" <?php echo ($emp['Q40a'] == 0) ? 'checked' : ''; ?>> No
+                        </div>
+                        <input type="text" name="Q40a_details" class="form-control mt-1" placeholder="Details" value="<?php echo htmlspecialchars($emp['Q40a_details']); ?>">
+                    </div>
+                    <div class="mb-2">
+                        <label>b. PWD?</label>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="Q40b" value="1" <?php echo ($emp['Q40b'] == 1) ? 'checked' : ''; ?>> Yes
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="Q40b" value="0" <?php echo ($emp['Q40b'] == 0) ? 'checked' : ''; ?>> No
+                        </div>
+                        <input type="text" name="Q40b_details" class="form-control mt-1" placeholder="Details" value="<?php echo htmlspecialchars($emp['Q40b_details']); ?>">
+                    </div>
+                    <div class="mb-2">
+                        <label>c. Solo Parent?</label>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="Q40c" value="1" <?php echo ($emp['Q40c'] == 1) ? 'checked' : ''; ?>> Yes
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="Q40c" value="0" <?php echo ($emp['Q40c'] == 0) ? 'checked' : ''; ?>> No
+                        </div>
+                        <input type="text" name="Q40c_details" class="form-control mt-1" placeholder="Details" value="<?php echo htmlspecialchars($emp['Q40c_details']); ?>">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Government IDs -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5>Government Issued IDs</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-bordered" id="gov_id_table">
+                        <thead>
+                            <tr>
+                                <th>ID Type</th>
+                                <th>ID No.</th>
+                                <th>Date Issued</th>
+                                <th>Place Issued</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (count($gov_ids) > 0): ?>
+                                <?php foreach ($gov_ids as $gid): ?>
+                                <tr>
+                                    <td><input type="text" name="gov_id_type[]" class="form-control" value="<?php echo htmlspecialchars($gid['id_type']); ?>" required></td>
+                                    <td><input type="text" name="gov_id_no[]" class="form-control" value="<?php echo htmlspecialchars($gid['id_number']); ?>" required></td>
+                                    <td><input type="date" name="gov_date_issued[]" class="form-control" value="<?php echo htmlspecialchars($gid['date_of_issuance']); ?>"></td>
+                                    <td><input type="text" name="gov_place_issued[]" class="form-control" value="<?php echo htmlspecialchars($gid['place_of_issuance']); ?>" required></td>
+                                    <td><button type="button" class="btn btn-danger btn-sm remove-row">Remove</button></td>
+                                </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td><input type="text" name="gov_id_type[]" class="form-control" required></td>
+                                    <td><input type="text" name="gov_id_no[]" class="form-control" required></td>
+                                    <td><input type="date" name="gov_date_issued[]" class="form-control"></td>
+                                    <td><input type="text" name="gov_place_issued[]" class="form-control" required></td>
+                                    <td><button type="button" class="btn btn-danger btn-sm remove-row">Remove</button></td>
+                                </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                    <button type="button" class="btn btn-success btn-sm" id="add_gov_id">Add Row</button>
+                </div>
+            </div>
+
+            <!-- Character References -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5>References</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-bordered" id="ref_table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Address</th>
+                                <th>Tel No.</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (count($refs) > 0): ?>
+                                <?php foreach ($refs as $ref): ?>
+                                <tr>
+                                    <td><input type="text" name="ref_name[]" class="form-control" value="<?php echo htmlspecialchars($ref['name']); ?>" required></td>
+                                    <td><input type="text" name="ref_address[]" class="form-control" value="<?php echo htmlspecialchars($ref['address']); ?>" required></td>
+                                    <td><input type="text" name="ref_tel_no[]" class="form-control" value="<?php echo htmlspecialchars($ref['contact_no']); ?>" required></td>
+                                    <td><button type="button" class="btn btn-danger btn-sm remove-row">Remove</button></td>
+                                </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td><input type="text" name="ref_name[]" class="form-control" required></td>
+                                    <td><input type="text" name="ref_address[]" class="form-control" required></td>
+                                    <td><input type="text" name="ref_tel_no[]" class="form-control" required></td>
+                                    <td><button type="button" class="btn btn-danger btn-sm remove-row">Remove</button></td>
+                                </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                    <button type="button" class="btn btn-success btn-sm" id="add_ref">Add Row</button>
+                </div>
+            </div>
+
             <button type="submit" class="btn btn-primary btn-lg mt-3">Update Employee</button>
             <a href="employee-list.php" class="btn btn-secondary btn-lg mt-3">Cancel</a>
         </form>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add Gov ID Row
+    document.getElementById('add_gov_id').addEventListener('click', function() {
+        var table = document.getElementById('gov_id_table').getElementsByTagName('tbody')[0];
+        var newRow = table.insertRow();
+        newRow.innerHTML = `
+            <td><input type="text" name="gov_id_type[]" class="form-control" required></td>
+            <td><input type="text" name="gov_id_no[]" class="form-control" required></td>
+            <td><input type="date" name="gov_date_issued[]" class="form-control"></td>
+            <td><input type="text" name="gov_place_issued[]" class="form-control" required></td>
+            <td><button type="button" class="btn btn-danger btn-sm remove-row">Remove</button></td>
+        `;
+    });
+
+    // Add Reference Row
+    document.getElementById('add_ref').addEventListener('click', function() {
+        var table = document.getElementById('ref_table').getElementsByTagName('tbody')[0];
+        var newRow = table.insertRow();
+        newRow.innerHTML = `
+            <td><input type="text" name="ref_name[]" class="form-control" required></td>
+            <td><input type="text" name="ref_address[]" class="form-control" required></td>
+            <td><input type="text" name="ref_tel_no[]" class="form-control" required></td>
+            <td><button type="button" class="btn btn-danger btn-sm remove-row">Remove</button></td>
+        `;
+    });
+
+    // Remove Row
+    document.addEventListener('click', function(e) {
+        if (e.target && e.target.classList.contains('remove-row')) {
+            var row = e.target.closest('tr');
+            row.parentNode.removeChild(row);
+        }
+    });
+});
+</script>
 
 <?php include '../includes/footer.php'; ?>

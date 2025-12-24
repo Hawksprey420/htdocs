@@ -91,9 +91,19 @@ include '../includes/topbar.php';
             </div>
         <?php endif; ?>
 
+        <?php if (isset($_SESSION['error'])): ?>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <strong>Error!</strong> <?php echo $_SESSION['error']; ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            <?php unset($_SESSION['error']); ?>
+        <?php endif; ?>
+
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h2>Employee List</h2>
+            <?php if (Auth::hasRole(1) || Auth::hasRole(2)): ?>
             <a href="add-employee.php" class="btn btn-success"><i class="fas fa-plus"></i> Add New Employee</a>
+            <?php endif; ?>
         </div>
 
         <div class="card mb-4">
@@ -129,8 +139,14 @@ include '../includes/topbar.php';
                                 <td><?php echo htmlspecialchars($row['job_category'] ?? 'N/A'); ?></td>
                                 <td>
                                     <a href="employee-data-view.php?id=<?php echo $row['idemployees']; ?>" class="btn btn-info btn-sm" title="View"><i class="fas fa-eye"></i></a>
+                                    
+                                    <?php if (Auth::hasRole(1) || Auth::hasRole(2) || (isset($user['employee_id']) && $user['employee_id'] == $row['idemployees'])): ?>
                                     <a href="employee-data-edit.php?id=<?php echo $row['idemployees']; ?>" class="btn btn-warning btn-sm" title="Edit"><i class="fas fa-edit"></i></a>
+                                    <?php endif; ?>
+
+                                    <?php if (Auth::hasRole(1) || Auth::hasRole(2)): ?>
                                     <a href="#" onclick="confirmDelete(<?php echo $row['idemployees']; ?>)" class="btn btn-danger btn-sm" title="Delete"><i class="fas fa-trash"></i></a>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endwhile; ?>

@@ -57,7 +57,12 @@ include '../includes/topbar.php';
 
 <div class="main-content">
     <div class="container-fluid">
-        <h2 class="mb-4">System Reports</h2>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>System Reports</h2>
+            <a href="../operations/export_report.php" class="btn btn-success">
+                <i class="fas fa-file-excel"></i> Export to Excel
+            </a>
+        </div>
 
         <div class="row">
             <!-- Employee Demographics -->
