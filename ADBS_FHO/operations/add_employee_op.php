@@ -5,6 +5,12 @@ require_once '../classes/conn.php';
 
 Auth::requireLogin();
 
+if (Auth::hasRole(3)) {
+    $_SESSION['error'] = "Access Denied: You do not have permission to add employees.";
+    header("Location: ../views/employee-data-view.php?id=" . Auth::user()['employee_id']);
+    exit();
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     $_SESSION['error'] = "Invalid request method.";
     header("Location: ../views/add-employee.php");
@@ -19,12 +25,26 @@ function clean($data) {
 
 // Helper function to generate a new ID
 function generateId($conn, $table, $idColumn) {
-    $query = "SELECT MAX($idColumn) as max_id FROM $table";
+    // 1. Check if ID 1 is available
+    $check = $conn->query("SELECT $idColumn FROM $table WHERE $idColumn = 1");
+    if ($check->num_rows == 0) return 1;
+
+    // 2. Find the first gap after 1
+    $query = "
+        SELECT t1.$idColumn + 1 AS next_id
+        FROM $table t1
+        LEFT JOIN $table t2 ON t1.$idColumn + 1 = t2.$idColumn
+        WHERE t2.$idColumn IS NULL AND t1.$idColumn < 2147483647
+        ORDER BY t1.$idColumn ASC
+        LIMIT 1
+    ";
     $result = $conn->query($query);
+    
     if ($result && $row = $result->fetch_assoc()) {
-        return $row['max_id'] + 1;
+        return $row['next_id'];
     }
-    return 1;
+    
+    throw new Exception("Unable to generate ID for $table. Table might be full.");
 }
 
 // Helper to get or insert institution
@@ -123,7 +143,7 @@ try {
     $weight = !empty($_POST['weight_in_kg']) ? clean($_POST['weight_in_kg']) : 0;
     $blood_type = clean($_POST['blood_type']);
     $gsis = clean($_POST['gsis_no']);
-    $pagibig = clean($_POST['pagibig_no']);
+    // $pagibig = clean($_POST['pagibig_no']); // Removed
     $philhealth = clean($_POST['philhealthno']);
     $sss = clean($_POST['sss_no']);
     $tin = clean($_POST['tin']);
@@ -219,7 +239,7 @@ try {
 
             // Insert into relatives
             $newRelId = generateId($conn, 'relatives', 'idrelatives');
-            $sql_rel = "INSERT INTO relatives (idrelatives, first_name, middle_name, last_name) VALUES ($newRelId, '$rel_first', '$rel_mid', '$rel_last')";
+            $sql_rel = "INSERT INTO relatives (idrelatives, first_name, middle_name, last_name, name_extension, Occupation, Emp_business, business_address, telephone, birthdate) VALUES ($newRelId, '$rel_first', '$rel_mid', '$rel_last', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', '1900-01-01')";
             if (!$conn->query($sql_rel)) throw new Exception("Error inserting relative: " . $conn->error);
             $rel_id = $newRelId;
 
@@ -246,10 +266,10 @@ try {
 
             $sql_educ = "INSERT INTO employees_education (
                 employees_idemployees, institutions_idinstitutions, education_level, Education_degree, 
-                period_attendance_from, period_attendance_to, units_earned, year_graduated, honors_received
+                start_period, end_period, units_earned, year_graduated, acad_honors, scholarships
             ) VALUES (
                 '$employee_id', '$inst_id', '$level', '$degree', 
-                '$from', '$to', '$units', '$grad', '$honors'
+                '$from', '$to', '$units', '$grad', '$honors', 'N/A'
             )";
             if (!$conn->query($sql_educ)) throw new Exception("Error inserting education: " . $conn->error);
         }
@@ -269,7 +289,7 @@ try {
             if (!$exam_id) continue;
 
             $sql_elig = "INSERT INTO employees_prof_eligibility (
-                employees_idemployees, professional_exams_idprofessional_exams, rating, exam_date, exam_place, license_number, license_validity_date
+                employees_idemployees, professional_exams_idprofessional_exams, rating, exam_date, exam_place, license_no, license_validity
             ) VALUES (
                 '$employee_id', '$exam_id', '$rating', '$date', '$place', '$license', '$validity'
             )";
@@ -324,9 +344,9 @@ try {
             if (!$inst_id) continue;
 
             $sql_vol = "INSERT INTO employees_ext_involvements (
-                employees_idemployees, institutions_idinstitutions, inclusive_dates_from, inclusive_dates_to, number_of_hours, position_nature_of_work
+                employees_idemployees, institutions_idinstitutions, start_date, end_date, no_hours, work_nature, involvement_type
             ) VALUES (
-                '$employee_id', '$inst_id', '$from', '$to', '$hours', '$pos'
+                '$employee_id', '$inst_id', '$from', '$to', '$hours', '$pos', 'Voluntary Work'
             )";
             if (!$conn->query($sql_vol)) throw new Exception("Error inserting voluntary work: " . $conn->error);
         }

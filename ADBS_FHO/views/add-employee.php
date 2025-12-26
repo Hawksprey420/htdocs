@@ -5,6 +5,12 @@ require_once '../classes/conn.php';
 Auth::requireLogin();
 $user = Auth::user();
 
+// Redirect employees to their own view
+if (Auth::hasRole(3)) {
+    header("Location: employee-data-view.php?id=" . $user['employee_id']);
+    exit();
+}
+
 // Fetch Departments
 $dept_query = "SELECT iddepartments, dept_name FROM departments ORDER BY dept_name";
 $dept_result = $conn->query($dept_query);
@@ -152,10 +158,7 @@ function old($key, $default = '') {
                             <label class="form-label">GSIS ID No.</label>
                             <input type="text" name="gsis_no" class="form-control" value="<?php echo old('gsis_no'); ?>">
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label">PAG-IBIG ID No.</label>
-                            <input type="text" name="pagibig_no" class="form-control" value="<?php echo old('pagibig_no'); ?>">
-                        </div>
+                        <!-- PAG-IBIG ID No. removed as it does not exist in database -->
                         <div class="col-md-3">
                             <label class="form-label">PhilHealth No.</label>
                             <input type="text" name="philhealthno" class="form-control" value="<?php echo old('philhealthno'); ?>">
@@ -284,18 +287,45 @@ function old($key, $default = '') {
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td>
-                                        <select name="family_relationship[]" class="form-select">
-                                            <option value="Spouse">Spouse</option>
-                                            <option value="Father">Father</option>
-                                            <option value="Mother">Mother</option>
-                                            <option value="Child">Child</option>
-                                        </select>
-                                    </td>
-                                    <td><input type="text" name="family_name[]" class="form-control" placeholder="Last Name, First Name, Middle Name"></td>
-                                    <td><button type="button" class="btn btn-danger btn-sm remove-row">Remove</button></td>
-                                </tr>
+                                <?php
+                                $fam_names = isset($_SESSION['form_data']['family_name']) ? $_SESSION['form_data']['family_name'] : [];
+                                $fam_rels = isset($_SESSION['form_data']['family_relationship']) ? $_SESSION['form_data']['family_relationship'] : [];
+                                
+                                if (!empty($fam_names)) {
+                                    foreach ($fam_names as $index => $name) {
+                                        $rel = isset($fam_rels[$index]) ? $fam_rels[$index] : '';
+                                        ?>
+                                        <tr>
+                                            <td>
+                                                <select name="family_relationship[]" class="form-select">
+                                                    <option value="Spouse" <?php echo ($rel == 'Spouse') ? 'selected' : ''; ?>>Spouse</option>
+                                                    <option value="Father" <?php echo ($rel == 'Father') ? 'selected' : ''; ?>>Father</option>
+                                                    <option value="Mother" <?php echo ($rel == 'Mother') ? 'selected' : ''; ?>>Mother</option>
+                                                    <option value="Child" <?php echo ($rel == 'Child') ? 'selected' : ''; ?>>Child</option>
+                                                </select>
+                                            </td>
+                                            <td><input type="text" name="family_name[]" class="form-control" value="<?php echo htmlspecialchars($name); ?>" placeholder="Last Name, First Name, Middle Name"></td>
+                                            <td><button type="button" class="btn btn-danger btn-sm remove-row">Remove</button></td>
+                                        </tr>
+                                        <?php
+                                    }
+                                } else {
+                                    ?>
+                                    <tr>
+                                        <td>
+                                            <select name="family_relationship[]" class="form-select">
+                                                <option value="Spouse">Spouse</option>
+                                                <option value="Father">Father</option>
+                                                <option value="Mother">Mother</option>
+                                                <option value="Child">Child</option>
+                                            </select>
+                                        </td>
+                                        <td><input type="text" name="family_name[]" class="form-control" placeholder="Last Name, First Name, Middle Name"></td>
+                                        <td><button type="button" class="btn btn-danger btn-sm remove-row">Remove</button></td>
+                                    </tr>
+                                    <?php
+                                }
+                                ?>
                             </tbody>
                         </table>
                         <button type="button" class="btn btn-primary btn-sm" id="addFamilyRow">Add Row</button>
@@ -321,25 +351,63 @@ function old($key, $default = '') {
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td>
-                                        <select name="educ_level[]" class="form-select">
-                                            <option value="Elementary">Elementary</option>
-                                            <option value="Secondary">Secondary</option>
-                                            <option value="Vocational">Vocational</option>
-                                            <option value="College">College</option>
-                                            <option value="Graduate Studies">Graduate Studies</option>
-                                        </select>
-                                    </td>
-                                    <td><input type="text" name="educ_school[]" class="form-control"></td>
-                                    <td><input type="text" name="educ_degree[]" class="form-control"></td>
-                                    <td><input type="date" name="educ_start[]" class="form-control"></td>
-                                    <td><input type="date" name="educ_end[]" class="form-control"></td>
-                                    <td><input type="text" name="educ_units[]" class="form-control"></td>
-                                    <td><input type="text" name="educ_grad[]" class="form-control"></td>
-                                    <td><input type="text" name="educ_honors[]" class="form-control"></td>
-                                    <td><button type="button" class="btn btn-danger btn-sm remove-row">Remove</button></td>
-                                </tr>
+                                <?php
+                                $educ_schools = isset($_SESSION['form_data']['educ_school']) ? $_SESSION['form_data']['educ_school'] : [];
+                                if (!empty($educ_schools)) {
+                                    foreach ($educ_schools as $k => $school) {
+                                        $level = $_SESSION['form_data']['educ_level'][$k] ?? '';
+                                        $degree = $_SESSION['form_data']['educ_degree'][$k] ?? '';
+                                        $start = $_SESSION['form_data']['educ_start'][$k] ?? '';
+                                        $end = $_SESSION['form_data']['educ_end'][$k] ?? '';
+                                        $units = $_SESSION['form_data']['educ_units'][$k] ?? '';
+                                        $grad = $_SESSION['form_data']['educ_grad'][$k] ?? '';
+                                        $honors = $_SESSION['form_data']['educ_honors'][$k] ?? '';
+                                        ?>
+                                        <tr>
+                                            <td>
+                                                <select name="educ_level[]" class="form-select">
+                                                    <option value="Elementary" <?php echo ($level == 'Elementary') ? 'selected' : ''; ?>>Elementary</option>
+                                                    <option value="Secondary" <?php echo ($level == 'Secondary') ? 'selected' : ''; ?>>Secondary</option>
+                                                    <option value="Vocational" <?php echo ($level == 'Vocational') ? 'selected' : ''; ?>>Vocational</option>
+                                                    <option value="College" <?php echo ($level == 'College') ? 'selected' : ''; ?>>College</option>
+                                                    <option value="Graduate Studies" <?php echo ($level == 'Graduate Studies') ? 'selected' : ''; ?>>Graduate Studies</option>
+                                                </select>
+                                            </td>
+                                            <td><input type="text" name="educ_school[]" class="form-control" value="<?php echo htmlspecialchars($school); ?>"></td>
+                                            <td><input type="text" name="educ_degree[]" class="form-control" value="<?php echo htmlspecialchars($degree); ?>"></td>
+                                            <td><input type="date" name="educ_start[]" class="form-control" value="<?php echo htmlspecialchars($start); ?>"></td>
+                                            <td><input type="date" name="educ_end[]" class="form-control" value="<?php echo htmlspecialchars($end); ?>"></td>
+                                            <td><input type="text" name="educ_units[]" class="form-control" value="<?php echo htmlspecialchars($units); ?>"></td>
+                                            <td><input type="text" name="educ_grad[]" class="form-control" value="<?php echo htmlspecialchars($grad); ?>"></td>
+                                            <td><input type="text" name="educ_honors[]" class="form-control" value="<?php echo htmlspecialchars($honors); ?>"></td>
+                                            <td><button type="button" class="btn btn-danger btn-sm remove-row">Remove</button></td>
+                                        </tr>
+                                        <?php
+                                    }
+                                } else {
+                                    ?>
+                                    <tr>
+                                        <td>
+                                            <select name="educ_level[]" class="form-select">
+                                                <option value="Elementary">Elementary</option>
+                                                <option value="Secondary">Secondary</option>
+                                                <option value="Vocational">Vocational</option>
+                                                <option value="College">College</option>
+                                                <option value="Graduate Studies">Graduate Studies</option>
+                                            </select>
+                                        </td>
+                                        <td><input type="text" name="educ_school[]" class="form-control"></td>
+                                        <td><input type="text" name="educ_degree[]" class="form-control"></td>
+                                        <td><input type="date" name="educ_start[]" class="form-control"></td>
+                                        <td><input type="date" name="educ_end[]" class="form-control"></td>
+                                        <td><input type="text" name="educ_units[]" class="form-control"></td>
+                                        <td><input type="text" name="educ_grad[]" class="form-control"></td>
+                                        <td><input type="text" name="educ_honors[]" class="form-control"></td>
+                                        <td><button type="button" class="btn btn-danger btn-sm remove-row">Remove</button></td>
+                                    </tr>
+                                    <?php
+                                }
+                                ?>
                             </tbody>
                         </table>
                         <button type="button" class="btn btn-primary btn-sm" id="addEducRow">Add Row</button>
@@ -363,15 +431,41 @@ function old($key, $default = '') {
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td><input type="text" name="cse_name[]" class="form-control"></td>
-                                    <td><input type="text" name="cse_rating[]" class="form-control"></td>
-                                    <td><input type="date" name="cse_date[]" class="form-control"></td>
-                                    <td><input type="text" name="cse_place[]" class="form-control"></td>
-                                    <td><input type="text" name="cse_license[]" class="form-control"></td>
-                                    <td><input type="date" name="cse_validity[]" class="form-control"></td>
-                                    <td><button type="button" class="btn btn-danger btn-sm remove-row">Remove</button></td>
-                                </tr>
+                                <?php
+                                $cse_names = isset($_SESSION['form_data']['cse_name']) ? $_SESSION['form_data']['cse_name'] : [];
+                                if (!empty($cse_names)) {
+                                    foreach ($cse_names as $k => $name) {
+                                        $rating = $_SESSION['form_data']['cse_rating'][$k] ?? '';
+                                        $date = $_SESSION['form_data']['cse_date'][$k] ?? '';
+                                        $place = $_SESSION['form_data']['cse_place'][$k] ?? '';
+                                        $license = $_SESSION['form_data']['cse_license'][$k] ?? '';
+                                        $validity = $_SESSION['form_data']['cse_validity'][$k] ?? '';
+                                        ?>
+                                        <tr>
+                                            <td><input type="text" name="cse_name[]" class="form-control" value="<?php echo htmlspecialchars($name); ?>"></td>
+                                            <td><input type="text" name="cse_rating[]" class="form-control" value="<?php echo htmlspecialchars($rating); ?>"></td>
+                                            <td><input type="date" name="cse_date[]" class="form-control" value="<?php echo htmlspecialchars($date); ?>"></td>
+                                            <td><input type="text" name="cse_place[]" class="form-control" value="<?php echo htmlspecialchars($place); ?>"></td>
+                                            <td><input type="text" name="cse_license[]" class="form-control" value="<?php echo htmlspecialchars($license); ?>"></td>
+                                            <td><input type="date" name="cse_validity[]" class="form-control" value="<?php echo htmlspecialchars($validity); ?>"></td>
+                                            <td><button type="button" class="btn btn-danger btn-sm remove-row">Remove</button></td>
+                                        </tr>
+                                        <?php
+                                    }
+                                } else {
+                                    ?>
+                                    <tr>
+                                        <td><input type="text" name="cse_name[]" class="form-control"></td>
+                                        <td><input type="text" name="cse_rating[]" class="form-control"></td>
+                                        <td><input type="date" name="cse_date[]" class="form-control"></td>
+                                        <td><input type="text" name="cse_place[]" class="form-control"></td>
+                                        <td><input type="text" name="cse_license[]" class="form-control"></td>
+                                        <td><input type="date" name="cse_validity[]" class="form-control"></td>
+                                        <td><button type="button" class="btn btn-danger btn-sm remove-row">Remove</button></td>
+                                    </tr>
+                                    <?php
+                                }
+                                ?>
                             </tbody>
                         </table>
                         <button type="button" class="btn btn-primary btn-sm" id="addCseRow">Add Row</button>
@@ -397,22 +491,57 @@ function old($key, $default = '') {
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td><input type="date" name="work_from[]" class="form-control"></td>
-                                    <td><input type="date" name="work_to[]" class="form-control"></td>
-                                    <td><input type="text" name="work_position[]" class="form-control"></td>
-                                    <td><input type="text" name="work_agency[]" class="form-control"></td>
-                                    <td><input type="number" name="work_salary[]" class="form-control"></td>
-                                    <td><input type="text" name="work_grade[]" class="form-control"></td>
-                                    <td><input type="text" name="work_status[]" class="form-control"></td>
-                                    <td>
-                                        <select name="work_gov[]" class="form-select">
-                                            <option value="1">Yes</option>
-                                            <option value="0">No</option>
-                                        </select>
-                                    </td>
-                                    <td><button type="button" class="btn btn-danger btn-sm remove-row">Remove</button></td>
-                                </tr>
+                                <?php
+                                $work_positions = isset($_SESSION['form_data']['work_position']) ? $_SESSION['form_data']['work_position'] : [];
+                                if (!empty($work_positions)) {
+                                    foreach ($work_positions as $k => $pos) {
+                                        $from = $_SESSION['form_data']['work_from'][$k] ?? '';
+                                        $to = $_SESSION['form_data']['work_to'][$k] ?? '';
+                                        $agency = $_SESSION['form_data']['work_agency'][$k] ?? '';
+                                        $salary = $_SESSION['form_data']['work_salary'][$k] ?? '';
+                                        $grade = $_SESSION['form_data']['work_grade'][$k] ?? '';
+                                        $status = $_SESSION['form_data']['work_status'][$k] ?? '';
+                                        $gov = $_SESSION['form_data']['work_gov'][$k] ?? '';
+                                        ?>
+                                        <tr>
+                                            <td><input type="date" name="work_from[]" class="form-control" value="<?php echo htmlspecialchars($from); ?>"></td>
+                                            <td><input type="date" name="work_to[]" class="form-control" value="<?php echo htmlspecialchars($to); ?>"></td>
+                                            <td><input type="text" name="work_position[]" class="form-control" value="<?php echo htmlspecialchars($pos); ?>"></td>
+                                            <td><input type="text" name="work_agency[]" class="form-control" value="<?php echo htmlspecialchars($agency); ?>"></td>
+                                            <td><input type="number" name="work_salary[]" class="form-control" value="<?php echo htmlspecialchars($salary); ?>"></td>
+                                            <td><input type="text" name="work_grade[]" class="form-control" value="<?php echo htmlspecialchars($grade); ?>"></td>
+                                            <td><input type="text" name="work_status[]" class="form-control" value="<?php echo htmlspecialchars($status); ?>"></td>
+                                            <td>
+                                                <select name="work_gov[]" class="form-select">
+                                                    <option value="1" <?php echo ($gov == '1') ? 'selected' : ''; ?>>Yes</option>
+                                                    <option value="0" <?php echo ($gov == '0') ? 'selected' : ''; ?>>No</option>
+                                                </select>
+                                            </td>
+                                            <td><button type="button" class="btn btn-danger btn-sm remove-row">Remove</button></td>
+                                        </tr>
+                                        <?php
+                                    }
+                                } else {
+                                    ?>
+                                    <tr>
+                                        <td><input type="date" name="work_from[]" class="form-control"></td>
+                                        <td><input type="date" name="work_to[]" class="form-control"></td>
+                                        <td><input type="text" name="work_position[]" class="form-control"></td>
+                                        <td><input type="text" name="work_agency[]" class="form-control"></td>
+                                        <td><input type="number" name="work_salary[]" class="form-control"></td>
+                                        <td><input type="text" name="work_grade[]" class="form-control"></td>
+                                        <td><input type="text" name="work_status[]" class="form-control"></td>
+                                        <td>
+                                            <select name="work_gov[]" class="form-select">
+                                                <option value="1">Yes</option>
+                                                <option value="0">No</option>
+                                            </select>
+                                        </td>
+                                        <td><button type="button" class="btn btn-danger btn-sm remove-row">Remove</button></td>
+                                    </tr>
+                                    <?php
+                                }
+                                ?>
                             </tbody>
                         </table>
                         <button type="button" class="btn btn-primary btn-sm" id="addWorkRow">Add Row</button>
@@ -435,14 +564,38 @@ function old($key, $default = '') {
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td><input type="text" name="vol_org[]" class="form-control"></td>
-                                    <td><input type="date" name="vol_from[]" class="form-control"></td>
-                                    <td><input type="date" name="vol_to[]" class="form-control"></td>
-                                    <td><input type="number" name="vol_hours[]" class="form-control"></td>
-                                    <td><input type="text" name="vol_position[]" class="form-control"></td>
-                                    <td><button type="button" class="btn btn-danger btn-sm remove-row">Remove</button></td>
-                                </tr>
+                                <?php
+                                $vol_orgs = isset($_SESSION['form_data']['vol_org']) ? $_SESSION['form_data']['vol_org'] : [];
+                                if (!empty($vol_orgs)) {
+                                    foreach ($vol_orgs as $k => $org) {
+                                        $from = $_SESSION['form_data']['vol_from'][$k] ?? '';
+                                        $to = $_SESSION['form_data']['vol_to'][$k] ?? '';
+                                        $hours = $_SESSION['form_data']['vol_hours'][$k] ?? '';
+                                        $pos = $_SESSION['form_data']['vol_position'][$k] ?? '';
+                                        ?>
+                                        <tr>
+                                            <td><input type="text" name="vol_org[]" class="form-control" value="<?php echo htmlspecialchars($org); ?>"></td>
+                                            <td><input type="date" name="vol_from[]" class="form-control" value="<?php echo htmlspecialchars($from); ?>"></td>
+                                            <td><input type="date" name="vol_to[]" class="form-control" value="<?php echo htmlspecialchars($to); ?>"></td>
+                                            <td><input type="number" name="vol_hours[]" class="form-control" value="<?php echo htmlspecialchars($hours); ?>"></td>
+                                            <td><input type="text" name="vol_position[]" class="form-control" value="<?php echo htmlspecialchars($pos); ?>"></td>
+                                            <td><button type="button" class="btn btn-danger btn-sm remove-row">Remove</button></td>
+                                        </tr>
+                                        <?php
+                                    }
+                                } else {
+                                    ?>
+                                    <tr>
+                                        <td><input type="text" name="vol_org[]" class="form-control"></td>
+                                        <td><input type="date" name="vol_from[]" class="form-control"></td>
+                                        <td><input type="date" name="vol_to[]" class="form-control"></td>
+                                        <td><input type="number" name="vol_hours[]" class="form-control"></td>
+                                        <td><input type="text" name="vol_position[]" class="form-control"></td>
+                                        <td><button type="button" class="btn btn-danger btn-sm remove-row">Remove</button></td>
+                                    </tr>
+                                    <?php
+                                }
+                                ?>
                             </tbody>
                         </table>
                         <button type="button" class="btn btn-primary btn-sm" id="addVolRow">Add Row</button>
@@ -466,15 +619,41 @@ function old($key, $default = '') {
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td><input type="text" name="ld_title[]" class="form-control"></td>
-                                    <td><input type="date" name="ld_from[]" class="form-control"></td>
-                                    <td><input type="date" name="ld_to[]" class="form-control"></td>
-                                    <td><input type="number" name="ld_hours[]" class="form-control"></td>
-                                    <td><input type="text" name="ld_type[]" class="form-control"></td>
-                                    <td><input type="text" name="ld_sponsor[]" class="form-control"></td>
-                                    <td><button type="button" class="btn btn-danger btn-sm remove-row">Remove</button></td>
-                                </tr>
+                                <?php
+                                $ld_titles = isset($_SESSION['form_data']['ld_title']) ? $_SESSION['form_data']['ld_title'] : [];
+                                if (!empty($ld_titles)) {
+                                    foreach ($ld_titles as $k => $title) {
+                                        $from = $_SESSION['form_data']['ld_from'][$k] ?? '';
+                                        $to = $_SESSION['form_data']['ld_to'][$k] ?? '';
+                                        $hours = $_SESSION['form_data']['ld_hours'][$k] ?? '';
+                                        $type = $_SESSION['form_data']['ld_type'][$k] ?? '';
+                                        $sponsor = $_SESSION['form_data']['ld_sponsor'][$k] ?? '';
+                                        ?>
+                                        <tr>
+                                            <td><input type="text" name="ld_title[]" class="form-control" value="<?php echo htmlspecialchars($title); ?>"></td>
+                                            <td><input type="date" name="ld_from[]" class="form-control" value="<?php echo htmlspecialchars($from); ?>"></td>
+                                            <td><input type="date" name="ld_to[]" class="form-control" value="<?php echo htmlspecialchars($to); ?>"></td>
+                                            <td><input type="number" name="ld_hours[]" class="form-control" value="<?php echo htmlspecialchars($hours); ?>"></td>
+                                            <td><input type="text" name="ld_type[]" class="form-control" value="<?php echo htmlspecialchars($type); ?>"></td>
+                                            <td><input type="text" name="ld_sponsor[]" class="form-control" value="<?php echo htmlspecialchars($sponsor); ?>"></td>
+                                            <td><button type="button" class="btn btn-danger btn-sm remove-row">Remove</button></td>
+                                        </tr>
+                                        <?php
+                                    }
+                                } else {
+                                    ?>
+                                    <tr>
+                                        <td><input type="text" name="ld_title[]" class="form-control"></td>
+                                        <td><input type="date" name="ld_from[]" class="form-control"></td>
+                                        <td><input type="date" name="ld_to[]" class="form-control"></td>
+                                        <td><input type="number" name="ld_hours[]" class="form-control"></td>
+                                        <td><input type="text" name="ld_type[]" class="form-control"></td>
+                                        <td><input type="text" name="ld_sponsor[]" class="form-control"></td>
+                                        <td><button type="button" class="btn btn-danger btn-sm remove-row">Remove</button></td>
+                                    </tr>
+                                    <?php
+                                }
+                                ?>
                             </tbody>
                         </table>
                         <button type="button" class="btn btn-primary btn-sm" id="addLdRow">Add Row</button>
@@ -495,18 +674,44 @@ function old($key, $default = '') {
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td><input type="text" name="other_name[]" class="form-control"></td>
-                                    <td>
-                                        <select name="other_type[]" class="form-select">
-                                            <option value="Skill">Skill</option>
-                                            <option value="Hobby">Hobby</option>
-                                            <option value="Recognition">Recognition</option>
-                                        </select>
-                                    </td>
-                                    <td><input type="text" name="other_desc[]" class="form-control"></td>
-                                    <td><button type="button" class="btn btn-danger btn-sm remove-row">Remove</button></td>
-                                </tr>
+                                <?php
+                                $other_names = isset($_SESSION['form_data']['other_name']) ? $_SESSION['form_data']['other_name'] : [];
+                                if (!empty($other_names)) {
+                                    foreach ($other_names as $k => $name) {
+                                        $type = $_SESSION['form_data']['other_type'][$k] ?? '';
+                                        $desc = $_SESSION['form_data']['other_desc'][$k] ?? '';
+                                        ?>
+                                        <tr>
+                                            <td><input type="text" name="other_name[]" class="form-control" value="<?php echo htmlspecialchars($name); ?>"></td>
+                                            <td>
+                                                <select name="other_type[]" class="form-select">
+                                                    <option value="Skill" <?php echo ($type == 'Skill') ? 'selected' : ''; ?>>Skill</option>
+                                                    <option value="Hobby" <?php echo ($type == 'Hobby') ? 'selected' : ''; ?>>Hobby</option>
+                                                    <option value="Recognition" <?php echo ($type == 'Recognition') ? 'selected' : ''; ?>>Recognition</option>
+                                                </select>
+                                            </td>
+                                            <td><input type="text" name="other_desc[]" class="form-control" value="<?php echo htmlspecialchars($desc); ?>"></td>
+                                            <td><button type="button" class="btn btn-danger btn-sm remove-row">Remove</button></td>
+                                        </tr>
+                                        <?php
+                                    }
+                                } else {
+                                    ?>
+                                    <tr>
+                                        <td><input type="text" name="other_name[]" class="form-control"></td>
+                                        <td>
+                                            <select name="other_type[]" class="form-select">
+                                                <option value="Skill">Skill</option>
+                                                <option value="Hobby">Hobby</option>
+                                                <option value="Recognition">Recognition</option>
+                                            </select>
+                                        </td>
+                                        <td><input type="text" name="other_desc[]" class="form-control"></td>
+                                        <td><button type="button" class="btn btn-danger btn-sm remove-row">Remove</button></td>
+                                    </tr>
+                                    <?php
+                                }
+                                ?>
                             </tbody>
                         </table>
                         <button type="button" class="btn btn-primary btn-sm" id="addOtherRow">Add Row</button>

@@ -40,10 +40,17 @@ include 'includes/topbar.php';
             <div class="col-md-4">
                 <div class="card text-center h-100">
                     <div class="card-body">
-                        <i class="fas fa-user-plus fa-3x text-success mb-3"></i>
-                        <h5 class="card-title">Add Employee</h5>
-                        <p class="card-text">Register a new employee.</p>
-                        <a href="views/add-employee.php" class="btn btn-success">Add New</a>
+                        <?php if (Auth::hasRole(3)): ?>
+                            <i class="fas fa-id-card fa-3x text-success mb-3"></i>
+                            <h5 class="card-title">My Profile</h5>
+                            <p class="card-text">View your employee data.</p>
+                            <a href="views/employee-data-view.php?id=<?php echo $user['employee_id']; ?>" class="btn btn-success">View Profile</a>
+                        <?php else: ?>
+                            <i class="fas fa-user-plus fa-3x text-success mb-3"></i>
+                            <h5 class="card-title">Add Employee</h5>
+                            <p class="card-text">Register a new employee.</p>
+                            <a href="views/add-employee.php" class="btn btn-success">Add New</a>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -57,6 +64,19 @@ include 'includes/topbar.php';
                     </div>
                 </div>
             </div>
+
+            <?php if (!Auth::hasRole(3)): ?>
+            <div class="col-md-4 mt-4">
+                <div class="card text-center h-100">
+                    <div class="card-body">
+                        <i class="fas fa-id-card fa-3x text-success mb-3"></i>
+                        <h5 class="card-title">My Profile</h5>
+                        <p class="card-text">View your employee data.</p>
+                        <a href="views/employee-data-view.php?id=<?php echo $user['employee_id']; ?>" class="btn btn-success">View Profile</a>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
         </div>
     </div>
 </div>
