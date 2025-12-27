@@ -4,7 +4,7 @@ require_once '../config/auth.php';
 
 Auth::requireLogin();
 
-// Only Admin can view logs
+// Only the admin can view system logs
 if (!Auth::hasRole(1)) {
     header("Location: ../index.php");
     exit();
