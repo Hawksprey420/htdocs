@@ -5,7 +5,7 @@ require_once '../classes/conn.php';
 Auth::requireLogin();
 $user = Auth::user();
 
-// Admin (1) and HR (2) can edit assignment. Employee (3) cannot.
+// The roles (id) Admin (1) and HR (2) can edit assignment. Employee (3) cannot manipulate work assignment.  
 $can_edit_assignment = ($user['role_id'] == 1 || $user['role_id'] == 2);
 // Employees cannot add new data rows, only edit existing ones.
 $can_add_data = ($user['role_id'] != 3);
@@ -17,7 +17,7 @@ if (!isset($_GET['id'])) {
 
 $emp_id = $_GET['id'];
 
-// 1. Fetch Employee Data
+// 1. Fetch Employee Data from DB
 $sql = "SELECT * FROM employees WHERE idemployees = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $emp_id);

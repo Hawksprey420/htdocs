@@ -5,21 +5,21 @@ require_once '../classes/conn.php';
 Auth::requireLogin();
 $user = Auth::user();
 
-// Redirect employees to their own view
+// Redirect employees to their own view if they are not admin or HR staff
 if (Auth::hasRole(3)) {
     header("Location: employee-data-view.php?id=" . $user['employee_id']);
     exit();
 }
 
-// Fetch Departments
+// Fetch Departments stored in DB
 $dept_query = "SELECT iddepartments, dept_name FROM departments ORDER BY dept_name";
 $dept_result = $conn->query($dept_query);
 
-// Fetch Positions
+// Fetch Positions from DB
 $pos_query = "SELECT idjob_positions, job_category FROM job_positions ORDER BY job_category";
 $pos_result = $conn->query($pos_query);
 
-// Fetch Contract Types
+// Fetch Contract Types from DB 
 $contract_query = "SELECT idcontract_types, contract_classification FROM contract_types ORDER BY contract_classification";
 $contract_result = $conn->query($contract_query);
 

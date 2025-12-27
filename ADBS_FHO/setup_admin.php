@@ -3,8 +3,6 @@ require_once 'classes/conn.php';
 require_once 'classes/User.php';
 
 $user = new User($conn);
-// NOTE: Ensure an employee with ID 0 exists (Mark Dhenniel Nepomuceno from the SQL dump)
-// If not, change this to a valid employee ID.
 $user->employee_id = 0; 
 $user->username = 'admin';
 $user->password = 'admin123';
